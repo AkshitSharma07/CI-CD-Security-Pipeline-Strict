@@ -7,13 +7,14 @@ on:
     branches: [ main ]
 
 jobs:
+
   # ─────────────────────────────────────────────
-  # JOB 1: SAST - Static Application Security Testing
-  # Tool: Bandit - scans Python code for vulnerabilities
+  # JOB 1: SAST - Bandit
   # ─────────────────────────────────────────────
   sast-bandit:
     name: SAST Scan (Bandit)
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -28,25 +29,24 @@ jobs:
 
       - name: Run Bandit SAST Scan
         run: |
-          echo "==============================="
-          echo "  Running Bandit SAST Scan"
-          echo "==============================="
-          bandit -r . -f json -o bandit-report.json 
-          bandit -r . -ll 
+          echo "Running Bandit SAST Scan"
+          bandit -r . -ll -f json -o bandit-report.json
 
+      # ✅ FIX: Always upload even if scan fails
       - name: Upload Bandit Report
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: bandit-sast-report
           path: bandit-report.json
 
   # ─────────────────────────────────────────────
-  # JOB 2: Dependency Vulnerability Check
-  # Tool: Safety - checks requirements.txt against CVE database
+  # JOB 2: Dependency Check - Safety
   # ─────────────────────────────────────────────
   dependency-check:
     name: Dependency Vulnerability Scan (Safety)
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -61,48 +61,46 @@ jobs:
 
       - name: Run Safety Dependency Scan
         run: |
-          echo "==============================="
-          echo "  Running Safety Dependency Check"
-          echo "==============================="
-          safety check -r requirements.txt --output text 
+          echo "Running Safety Dependency Check"
+          safety check -r requirements.txt
           safety check -r requirements.txt --save-json safety-report.json
 
+      # ✅ FIX: Always upload report
       - name: Upload Safety Report
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: safety-dependency-report
           path: safety-report.json
 
   # ─────────────────────────────────────────────
-  # JOB 3: Secrets Detection
-  # Tool: TruffleHog - scans for hardcoded secrets, API keys, passwords
+  # JOB 3: Secrets Detection - TruffleHog
   # ─────────────────────────────────────────────
   secrets-scan:
     name: Secrets Detection (TruffleHog)
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1  
+          fetch-depth: 1
 
       - name: Run TruffleHog Secrets Scan
         uses: trufflesecurity/trufflehog@main
         with:
           path: ./
-          base: ${{ github.event.repository.default_branch }}
-          head: HEAD
-          extra_args: --debug --only-verified
+          extra_args: --only-verified
 
   # ─────────────────────────────────────────────
-  # JOB 4: Security Summary Report
-  # Runs after all scans, prints consolidated summary
+  # JOB 4: Summary
   # ─────────────────────────────────────────────
   security-summary:
     name: Security Summary
     runs-on: ubuntu-latest
     needs: [sast-bandit, dependency-check, secrets-scan]
     if: always()
+
     steps:
       - name: Print Summary
         run: |
