@@ -41,3 +41,4 @@ def secure_hash(password):
 if __name__ == "__main__":
     print("Security Pipeline Demo App")
     print("This app is intentionally vulnerable for scanning demonstration.")
+    print('hello')
