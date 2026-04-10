@@ -93,9 +93,11 @@ Detects 700+ credential types
 
 📁 Project Structure
 .
-├── .github/workflows/security-pipeline.yml
-├── app.py
-├── requirements.txt
+├── .github/workflows/security-pipeline.yml   # CI/CD pipeline configuration
+├── app.py                                   # Main sample vulnerable application
+├── app1.py                                  # Safe Python app (test case 1)
+├── app2.py                                  # Safe Python app (test case 2)
+├── requirements.txt                         # Dependencies for Safety scanning
 
 
 ▶️ How to Set Up & Run
@@ -105,3 +107,15 @@ Go to the Actions tab
 Make a change in app.py
 Push code → pipeline runs automatically
 Download reports from Artifacts
+
+⚠️ Note on Test Results
+
+The “Safe Python App” test case may still show a failure.
+
+This happens because:
+
+The pipeline scans the entire Git commit history
+The main sample file (app.py) contains intentionally vulnerable code
+Even if app1.py or app2.py are safe, vulnerabilities from other files or past commits are still detected
+
+👉 As a result, the pipeline correctly reports a failure.
